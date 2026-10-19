@@ -1,0 +1,41 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: Criação de data lake em arquitetura medalhão
+
+Resources:
+  S3BucketBronze:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      BucketName:
+        Fn::Sub: 'bucket-bronze-${AWS::AccountId}-${AWS::Region}'
+    DeletionPolicy: Retain
+
+  S3BucketSilver:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      BucketName:
+        Fn::Sub: 'bucket-silver-${AWS::AccountId}-${AWS::Region}'
+    DeletionPolicy: Retain    
+
+  S3BucketGold:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      BucketName:
+        Fn::Sub: 'bucket-gold-${AWS::AccountId}-${AWS::Region}'
+    DeletionPolicy: Retain 
+...

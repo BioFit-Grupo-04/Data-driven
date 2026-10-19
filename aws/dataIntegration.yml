@@ -1,0 +1,158 @@
+---
+Description: Criação de VPC + Subrede + Servidor PySpark
+
+Parameters:
+  Environmentname:
+    Description: Prefixo no nome dos recursos
+    Type: String
+    Default: dataintegration
+
+  Ami:
+    Description: id do sistema operacional, Ubuntu 22.04 LTS
+    Type: String
+    Default: ami-0f8a61b66d1accaee # SEMPRE CHECAR A AMI
+
+  KeyPairName: 
+    Description: pem key Name
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: pyspark_key # CRIAR ESSA CHAVE!!
+
+Resources:
+# CRIANDO A REDE
+  vpcDataIntegration:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.100.0.0/21
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      Tags:
+        - Key: Name 
+          Value:
+            Fn::Sub: "04242013${Environmentname}-vpc"
+        - Key: stack
+          Value: production
+
+  igw:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: 
+            Fn::Sub: "04242013${Environmentname}-igw"
+
+  igwattach:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: 
+        Ref: igw
+      VpcId: 
+        Ref: vpcDataIntegration
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: 
+        Ref: vpcDataIntegration
+      AvailabilityZone: 
+        Fn::Select: 
+          - 0
+          - Fn::GetAZs: 
+              Ref: "AWS::Region"
+      CidrBlock: "10.100.1.0/24"
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: 
+            Fn::Sub: "04242013${Environmentname}-publicSubnet"
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: 
+        Ref: vpcDataIntegration
+      Tags:
+        - Key: Name
+          Value: 
+            Fn::Sub: "04242013${Environmentname}-publicRt"
+
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: igwattach
+    Properties:
+      RouteTableId: 
+        Ref: PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: 
+        Ref: igw
+
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: 
+        Ref: PublicRouteTable
+      SubnetId: 
+        Ref: PublicSubnet
+
+  WebSecurityGroup:
+    DependsOn: vpcDataIntegration
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Permitir HTTP e SSH"
+      VpcId: 
+        Ref: vpcDataIntegration
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: 
+            Fn::Sub: "04242013-${Environmentname}-sg"
+
+# CRIANDO O SERVIDOR DE JUPYTER + PYSPARK      
+  PySparkServer:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t3.medium
+      ImageId:
+        Ref: Ami
+      IamInstanceProfile: LabInstanceProfile
+      KeyName:
+        Ref: KeyPairName
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 30
+            VolumeType: gp3
+            DeleteOnTermination: true
+      UserData:
+        Fn::Base64:
+          Fn::Sub: |
+            #!/bin/bash
+            apt-get update -y
+            apt-get install -y openjdk-17-jdk python3-pip python3-venv curl
+
+            # Download do Spark
+            curl -O https://dlcdn.apache.org/spark/spark-4.2.0/spark-4.2.0-bin-hadoop3.tgz
+            tar -xvf spark-4.2.0-bin-hadoop3.tgz -C /usr/local --owner root --group root --no-same-owner 
+            rm -f spark-4.2.0-bin-hadoop3.tgz
+            mv /usr/local/spark-4.2.0-bin-hadoop3 /usr/local/spark
+      NetworkInterfaces:
+        - DeviceIndex: "0"
+          SubnetId: 
+            Ref: PublicSubnet
+          GroupSet:
+            - Ref: WebSecurityGroup
+      Tags:
+        - Key: Name
+          Value: 
+            Fn::Sub: "04242013-${Environmentname}-pyspark"
+...
