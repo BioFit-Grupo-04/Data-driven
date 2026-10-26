@@ -8,68 +8,54 @@
 //   start: -7d
 // )
 
-// qtd de capturas de um valor
+// Gráfico 1: Taxa de Ingestão de Dados (Volumetria a cada 5s por tipo de sensor)
 from(bucket: "sensores")
-  |> range(start: -1h)
+  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
   |> filter(fn: (r) => r["_measurement"] == "telemetria_academia")
-  |> filter(fn: (r) => r["_field"] == "batimento")
-  |> map(fn: (r) => ({r with n: 1}))
-  |> group(columns: ["_value"])
-  |> sum(column: "n")
-  |> group()
-  |> sort(columns: ["_value"])
-  |> keep(columns: ["_value", "n"])
+  |> group(columns: ["tipo_sensor"]) 
+  |> aggregateWindow(every: 5s, fn: count, createEmpty: false)
+  |> yield(name: "taxa_ingestao")
 
-// sensores online
+// Gráfico 2: Leituras por minuto, por dispositivo (Identificação de quedas/buracos)
+from(bucket: "sensores")
+  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+  |> filter(fn: (r) => r["_measurement"] == "telemetria_academia")
+  |> group(columns: ["dispositivo_id"])
+  |> aggregateWindow(every: 1m, fn: count, createEmpty: true)
+  |> yield(name: "leituras_dispositivo")
+
+// Gráfico 3: Latência
+from(bucket: "sensores")
+  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+  |> filter(fn: (r) => r["_measurement"] == "telemetria_academia")
+  |> filter(fn: (r) => r["_field"] == "latencia_ms")
+  |> group(columns: ["tipo_sensor"])
+  |> aggregateWindow(every: 1m, fn: mean, createEmpty: false)
+  |> yield(name: "latencia_media")
+
+// KPI 1: Sensores Online (Últimos 5 minutos)
 from(bucket: "sensores")
   |> range(start: -5m)
   |> filter(fn: (r) => r["_measurement"] == "telemetria_academia")
-  |> filter(fn: (r) => r["_field"] == "batimento")
   |> group()
   |> distinct(column: "dispositivo_id")
   |> count()
 
-
-// Gráfico de linha: leituras por minuto, por dispositivo
+// KPI 2: Anomalias de Injeção / Leituras fora da faixa (Hardware Limits)
 from(bucket: "sensores")
   |> range(start: -1h)
   |> filter(fn: (r) => r["_measurement"] == "telemetria_academia")
-  |> filter(fn: (r) => r["_field"] == "batimento")
-  |> group(columns: ["dispositivo_id"])
-  |> aggregateWindow(every: 1m, fn: count, createEmpty: true)
-
-// KPI: leituras fora da baixa plausível
-from(bucket: "sensores")
-  |> range(start: -1h)
-  |> filter(fn: (r) => r["_measurement"] == "telemetria_academia")
-  |> filter(fn: (r) => r["_field"] == "batimento" or r["_field"] == "spo2" or r["_field"] == "temperatura_pele")
+  |> filter(fn: (r) => r["_field"] == "batimento" or r["_field"] == "spo2" or r["_field"] == "temperatura_pele" or r["_field"] == "distancia")
   |> map(fn: (r) => ({
       r with
       fora:
-        if r._field == "batimento" and (float(v: r._value) < 30.0 or float(v: r._value) > 220.0) then 1
-        else if r._field == "spo2" and (float(v: r._value) < 70.0 or float(v: r._value) > 100.0) then 1
-        else if r._field == "temperatura_pele" and (float(v: r._value) < 20.0 or float(v: r._value) > 45.0) then 1
+        // Limites físicos absurdos que indicam falha no sensor ou injeção de dados corrompidos
+        if r._field == "batimento" and (float(v: r._value) < 0.0 or float(v: r._value) > 300.0) then 1
+        else if r._field == "spo2" and (float(v: r._value) < 0.0 or float(v: r._value) > 100.0) then 1
+        else if r._field == "temperatura_pele" and (float(v: r._value) < -10.0 or float(v: r._value) > 80.0) then 1
+        else if r._field == "distancia" and (float(v: r._value) < 0.0 or float(v: r._value) > 400.0) then 1 // Limite HC-SR04
         else 0
     }))
   |> keep(columns: ["fora"])
   |> group()
   |> sum(column: "fora")
-
-// Gráfico de linha por campo
-from(bucket: "sensores")
-  |> range(start: -1h)
-  |> filter(fn: (r) => r["_measurement"] == "telemetria_academia")
-  |> filter(fn: (r) => r["_field"] == "batimento")
-  |> group(columns: ["dispositivo_id"])
-  |> aggregateWindow(every: 30s, fn: mean, createEmpty: false)
-
-// Gráfico de barras: mediana por sensor
-from(bucket: "sensores")
-  |> range(start: -1h)
-  |> filter(fn: (r) => r["_measurement"] == "telemetria_academia")
-  |> filter(fn: (r) => r["_field"] == "batimento")
-  |> map(fn: (r) => ({r with _value: float(v: r._value)}))
-  |> group(columns: ["dispositivo_id"])
-  |> median()
-  |> group()
-  |> keep(columns: ["dispositivo_id", "_value"])
