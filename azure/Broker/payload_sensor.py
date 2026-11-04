@@ -4,7 +4,7 @@ import paho.mqtt.client as mqtt
 from paho.mqtt.enums import CallbackAPIVersion
 import random
 
-BROKER_IP = "68.211.72.191"
+BROKER_IP = "100.53.117.49"
 PORTA = 1883
 TOPICO = "sensores/"
 

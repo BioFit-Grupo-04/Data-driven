@@ -1,0 +1,197 @@
+---
+Description: Criação de VPC + Subrede + Servidor
+
+Parameters:
+  Environmentname:
+    Description: Prefixo no nome dos recursos
+    Type: String
+    Default: Biofit
+
+  Ami:
+    Description: id do sistema operacional, Ubuntu 22.04 LTS
+    Type: String
+    Default: ami-0f8a61b66d1accaee # SEMPRE CHECAR A AMI
+
+  KeyPairName: 
+    Description: pem key Name
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: private_key # CRIAR ESSA CHAVE!!
+
+Resources:
+# CRIANDO A REDE
+  vpcAzure:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.100.0.0/21
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      Tags:
+        - Key: Name 
+          Value:
+            Fn::Sub: "biofit${Environmentname}-vpc"
+        - Key: stack
+          Value: production
+
+  igw:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: 
+            Fn::Sub: "biofit${Environmentname}-igw"
+
+  igwattach:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: 
+        Ref: igw
+      VpcId: 
+        Ref: vpcAzure
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: 
+        Ref: vpcAzure
+      AvailabilityZone: 
+        Fn::Select: 
+          - 0
+          - Fn::GetAZs: 
+              Ref: "AWS::Region"
+      CidrBlock: "10.100.1.0/24"
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: 
+            Fn::Sub: "biofit${Environmentname}-publicSubnet"
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: 
+        Ref: vpcAzure
+      Tags:
+        - Key: Name
+          Value: 
+            Fn::Sub: "biofit${Environmentname}-publicRt"
+
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: igwattach
+    Properties:
+      RouteTableId: 
+        Ref: PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: 
+        Ref: igw
+
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: 
+        Ref: PublicRouteTable
+      SubnetId: 
+        Ref: PublicSubnet
+
+  WebSecurityGroup:
+    DependsOn: vpcAzure
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Permitir HTTP e SSH"
+      VpcId: 
+        Ref: vpcAzure
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: 
+            Fn::Sub: "biofit-${Environmentname}-sg"
+
+# CRIANDO O EC2 1   
+Server01:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t3.medium
+      ImageId:
+        Ref: Ami
+      IamInstanceProfile: LabInstanceProfile
+      KeyName:
+        Ref: KeyPairName
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 30
+            VolumeType: gp3
+            DeleteOnTermination: true
+      UserData:
+        Fn::Base64:
+          Fn::Sub: |
+            #!/bin/bash
+            sudo apt update
+            sudo apt install -y mosquitto mosquitto-clients
+
+            sudo systemctl start mosquitto.service
+            sudo systemctl enable mosquitto.service
+            sudo systemctl status mosquitto.service --no-pager
+            
+      NetworkInterfaces:
+        - DeviceIndex: "0"
+          SubnetId: 
+            Ref: PublicSubnet
+          GroupSet:
+            - Ref: WebSecurityGroup
+      Tags:
+        - Key: Name
+          Value: 
+            Fn::Sub: "biofit-${Environmentname}-vm1"
+
+# CRIANDO O EC2 2
+Server02:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t3.medium
+      ImageId:
+        Ref: Ami
+      IamInstanceProfile: LabInstanceProfile
+      KeyName:
+        Ref: KeyPairName
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 30
+            VolumeType: gp3
+            DeleteOnTermination: true
+      UserData:
+        Fn::Base64:
+          Fn::Sub: |
+            #!/bin/bash
+            # ESPAÇO RESERVADO: Insira aqui os comandos shell para subir os serviços da VM 2
+            sudo apt update
+            sudo apt install docker.io -y
+            sudo apt install docker-compose -y
+            sudo apt install -y nginx
+            sudo apt install telegraf -y
+            
+      NetworkInterfaces:
+        - DeviceIndex: "0"
+          SubnetId: 
+            Ref: PublicSubnet
+          GroupSet:
+            - Ref: WebSecurityGroup
+      Tags:
+        - Key: Name
+          Value: 
+            Fn::Sub: "biofit-${Environmentname}-vm2"
+...
