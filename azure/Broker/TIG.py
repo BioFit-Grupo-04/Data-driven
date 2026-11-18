@@ -5,7 +5,7 @@ from paho.mqtt.enums import CallbackAPIVersion
 import random
 
 # Config do Broker
-BROKER_IP = "100.53.117.49"
+BROKER_IP = "54.237.200.29"
 PORTA = 1883
 TOPICO = "sensores/"
 
