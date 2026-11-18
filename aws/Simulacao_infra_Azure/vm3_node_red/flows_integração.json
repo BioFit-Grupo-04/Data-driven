@@ -1,0 +1,508 @@
+[
+    {
+        "id": "f6f2187d.f17ca8",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "3cc11d24.ff01a2",
+        "type": "comment",
+        "z": "f6f2187d.f17ca8",
+        "name": "WARNING: please check you have started this container with a volume that is mounted to /data\\n otherwise any flow changes are lost when you redeploy or upgrade the container\\n (e.g. upgrade to a more recent node-red docker image).\\n  If you are using named volumes you can ignore this warning.\\n Double click or see info side panel to learn how to start Node-RED in Docker to save your work",
+        "info": "\nTo start docker with a bind mount volume (-v option), for example:\n\n```\ndocker run -it -p 1880:1880 -v /home/user/node_red_data:/data --name mynodered nodered/node-red\n```\n\nwhere `/home/user/node_red_data` is a directory on your host machine where you want to store your flows.\n\nIf you do not do this then you can experiment and redploy flows, but if you restart or upgrade the container the flows will be disconnected and lost. \n\nThey will still exist in a hidden data volume, which can be recovered using standard docker techniques, but that is much more complex than just starting with a named volume as described above.",
+        "x": 350,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "bd9b6a64ba56d5e2",
+        "type": "mqtt in",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "topic": "#",
+        "qos": "2",
+        "datatype": "json",
+        "broker": "57723b6f8cb87660",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 150,
+        "y": 260,
+        "wires": [
+            [
+                "8ce87360628b6db8"
+            ]
+        ]
+    },
+    {
+        "id": "8ce87360628b6db8",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 360,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "92580581437b7df6",
+        "type": "switch",
+        "z": "f6f2187d.f17ca8",
+        "name": "switch",
+        "property": "payload.leitura.temperatura",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "gt",
+                "v": "10",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 310,
+        "y": 360,
+        "wires": [
+            [
+                "271cd6dfd027deeb"
+            ]
+        ]
+    },
+    {
+        "id": "dc372944603ad48c",
+        "type": "mqtt in",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "topic": "#",
+        "qos": "2",
+        "datatype": "json",
+        "broker": "57723b6f8cb87660",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 150,
+        "y": 360,
+        "wires": [
+            [
+                "92580581437b7df6"
+            ]
+        ]
+    },
+    {
+        "id": "271cd6dfd027deeb",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "debug 2",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 480,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "930d4f1f6c4a0d68",
+        "type": "mqtt in",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "topic": "#",
+        "qos": "2",
+        "datatype": "json",
+        "broker": "57723b6f8cb87660",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 150,
+        "y": 440,
+        "wires": [
+            [
+                "fd94a38835a762d7"
+            ]
+        ]
+    },
+    {
+        "id": "e5e765f482d1f891",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "debug 3",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 620,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "a4144833831e879a",
+        "type": "batch",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "mode": "count",
+        "count": "15",
+        "overlap": 0,
+        "interval": 10,
+        "allowEmptySequence": false,
+        "honourParts": false,
+        "topics": [],
+        "x": 470,
+        "y": 440,
+        "wires": [
+            [
+                "e5e765f482d1f891"
+            ]
+        ]
+    },
+    {
+        "id": "fd94a38835a762d7",
+        "type": "switch",
+        "z": "f6f2187d.f17ca8",
+        "name": "switch",
+        "property": "payload.leitura.temperatura",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "gt",
+                "v": "10",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 310,
+        "y": 440,
+        "wires": [
+            [
+                "a4144833831e879a"
+            ]
+        ]
+    },
+    {
+        "id": "4e96b7f74fa7055f",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "function 1",
+        "func": "// Recupera o array salvo na memória do nó, ou cria um novo\nlet msgs = context.get('msgs') || [];\n\n// Adiciona a nova medição\nmsgs.push(msg.payload.leitura.temperatura);\n\n// Ao atingir 15 medições, envia o lote e zera o contador\nif (msgs.length >= 15) {\n    context.set('msgs', []);\n    return { payload: msgs };\n}\n\n// Ainda não chegou a 15: guarda e não envia nada\ncontext.set('msgs', msgs);\nreturn null;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 460,
+        "y": 520,
+        "wires": [
+            [
+                "b1e1b46134343f49"
+            ]
+        ]
+    },
+    {
+        "id": "36e2c97294e6e19f",
+        "type": "mqtt in",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "topic": "#",
+        "qos": "2",
+        "datatype": "json",
+        "broker": "57723b6f8cb87660",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 150,
+        "y": 520,
+        "wires": [
+            [
+                "8f3127913445bc14"
+            ]
+        ]
+    },
+    {
+        "id": "b1e1b46134343f49",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "debug 4",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 620,
+        "y": 520,
+        "wires": []
+    },
+    {
+        "id": "8f3127913445bc14",
+        "type": "switch",
+        "z": "f6f2187d.f17ca8",
+        "name": "switch",
+        "property": "payload.leitura.temperatura",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "gt",
+                "v": "10",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 310,
+        "y": 520,
+        "wires": [
+            [
+                "4e96b7f74fa7055f"
+            ]
+        ]
+    },
+    {
+        "id": "4447b22576f93d53",
+        "type": "mqtt in",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "topic": "#",
+        "qos": "2",
+        "datatype": "json",
+        "broker": "57723b6f8cb87660",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 90,
+        "y": 1160,
+        "wires": [
+            [
+                "b07576f2a355c0db",
+                "ebae2b3562c89005"
+            ]
+        ]
+    },
+    {
+        "id": "b07576f2a355c0db",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "#",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 250,
+        "y": 1060,
+        "wires": []
+    },
+    {
+        "id": "ebae2b3562c89005",
+        "type": "batch",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "mode": "count",
+        "count": "15",
+        "overlap": 0,
+        "interval": 10,
+        "allowEmptySequence": false,
+        "honourParts": false,
+        "topics": [],
+        "x": 270,
+        "y": 1160,
+        "wires": [
+            [
+                "cbee526a81e84e6c",
+                "7db6f186da7c50b1"
+            ]
+        ]
+    },
+    {
+        "id": "cbee526a81e84e6c",
+        "type": "join",
+        "z": "f6f2187d.f17ca8",
+        "name": "Join.01",
+        "mode": "auto",
+        "build": "object",
+        "property": "leitura",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "useparts": false,
+        "accumulate": true,
+        "timeout": "",
+        "count": "",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "num",
+        "reduceFixup": "",
+        "x": 440,
+        "y": 1160,
+        "wires": [
+            [
+                "3ad4f6122f165cab",
+                "5fe4fac4d9448271"
+            ]
+        ]
+    },
+    {
+        "id": "3ad4f6122f165cab",
+        "type": "change",
+        "z": "f6f2187d.f17ca8",
+        "name": "Definir msg.url",
+        "rules": [
+            {
+                "t": "set",
+                "p": "url",
+                "pt": "msg",
+                "to": "\"https://6tpqksl2f2.execute-api.us-east-1.amazonaws.com/hmg/bucket-biofit/\" & $millis() & \".json\"",
+                "tot": "jsonata"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 640,
+        "y": 1160,
+        "wires": [
+            [
+                "496c5c1d1d821635",
+                "08efab1947582b77"
+            ]
+        ]
+    },
+    {
+        "id": "496c5c1d1d821635",
+        "type": "http request",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "method": "PUT",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 840,
+        "y": 1160,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "7db6f186da7c50b1",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "lote",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 470,
+        "y": 1060,
+        "wires": []
+    },
+    {
+        "id": "5fe4fac4d9448271",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "join",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 670,
+        "y": 1060,
+        "wires": []
+    },
+    {
+        "id": "08efab1947582b77",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "url",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 890,
+        "y": 1060,
+        "wires": []
+    },
+    {
+        "id": "57723b6f8cb87660",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "54.237.200.29",
+        "port": 1883,
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    }
+]

@@ -120,7 +120,7 @@ Resources:
             Fn::Sub: "biofit-${Environmentname}-sg"
 
 # CRIANDO O EC2 1   
-Server01:
+  Server01:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: t3.medium
@@ -132,7 +132,7 @@ Server01:
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
-            VolumeSize: 30
+            VolumeSize: 60
             VolumeType: gp3
             DeleteOnTermination: true
       UserData:
@@ -158,7 +158,7 @@ Server01:
             Fn::Sub: "biofit-${Environmentname}-vm1"
 
 # CRIANDO O EC2 2
-Server02:
+  Server02:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: t3.medium
@@ -170,7 +170,7 @@ Server02:
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
-            VolumeSize: 30
+            VolumeSize: 60
             VolumeType: gp3
             DeleteOnTermination: true
       UserData:
