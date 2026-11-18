@@ -68,8 +68,5 @@ Reúne o provisionamento e os componentes voltados para o ambiente Microsoft Azu
 
 Espaço reservado para acompanhamento de melhorias, correções e tarefas pendentes na infraestrutura:
 
-- [ ] **Segurança**: Criar/atualizar o `.gitignore` para impedir o versionamento de chaves privadas (`*.pem`).
-- [ ] **Padronização**: Revisar nomes de arquivos de configuração (ex.: `moquitto.conf` e `docker-composer.yml`).
-- [ ] **Documentação**: Adicionar instruções passo a passo de deploy para os ambientes AWS e Azure.
-- [ ] **Automação**: Validar a execução ponta a ponta dos scripts `setup-amb.sh` e `exec.sh`.
+- [ ] **Broker**: Ajustar a configuração do docker da VM1_broker.
 - [ ] *(Adicione aqui novas pendências do projeto)*
